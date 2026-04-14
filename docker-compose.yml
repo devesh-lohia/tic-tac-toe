@@ -1,0 +1,41 @@
+services:
+  # Local Postgres is disabled in favor of Supabase
+  # postgres:
+  #   container_name: postgres
+  #   image: postgres:16-alpine
+  #   environment:
+  #     - POSTGRES_DB=nakama
+  #     - POSTGRES_PASSWORD=localdb
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   expose:
+  #     - "5432"
+  #   ports:
+  #     - "5432:5432"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  nakama:
+    container_name: nakama
+    build: ./backend
+    restart: always
+    environment:
+      - NAKAMA_DATABASE_URL=${NAKAMA_DATABASE_URL}
+      - NAKAMA_LOGGER_LEVEL=${NAKAMA_LOGGER_LEVEL:-DEBUG}
+      - NAKAMA_SERVER_KEY=${NAKAMA_SERVER_KEY:-defaultkey}
+      - NAKAMA_SESSION_KEY=${NAKAMA_SESSION_KEY:-default-encryption-key}
+      - CORS_ORIGINS=${NETLIFY_URL:-*}
+    expose:
+      - "7349"
+      - "7350"
+      - "7351"
+    ports:
+      - "7349:7349"
+      - "7350:7350"
+      - "7351:7351"
+
+volumes:
+  postgres-data:

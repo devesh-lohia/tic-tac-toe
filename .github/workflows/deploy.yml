@@ -1,0 +1,45 @@
+name: Sync Secrets & Deploy
+# Version: 1.2.0 - Migrating Frontend to Vercel
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  sync-railway:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Sync Railway Secrets
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID || vars.RAILWAY_SERVICE_ID }}
+          DB_URL: ${{ secrets.NAKAMA_DATABASE_URL }}
+          SERVER_KEY: ${{ secrets.NAKAMA_SERVER_KEY }}
+          CORS_URL: "https://tic-tac-toe-devesh.vercel.app"
+        run: |
+          ARGS=""
+          [ -n "$DB_URL" ] && ARGS="$ARGS NAKAMA_DATABASE_URL=$DB_URL"
+          [ -n "$SERVER_KEY" ] && ARGS="$ARGS NAKAMA_SERVER_KEY=$SERVER_KEY"
+          [ -n "$CORS_URL" ] && ARGS="$ARGS CORS_ORIGINS=$CORS_URL"
+          ARGS="$ARGS NAKAMA_CONSOLE_USERNAME=${{ secrets.NAKAMA_CONSOLE_USERNAME || vars.NAKAMA_CONSOLE_USERNAME || 'admin' }}"
+          ARGS="$ARGS NAKAMA_CONSOLE_PASSWORD=${{ secrets.NAKAMA_CONSOLE_PASSWORD || vars.NAKAMA_CONSOLE_PASSWORD || 'password' }}"
+          
+          SERVICE_FLAG=""
+          if [ -n "$SERVICE_ID" ]; then
+            SERVICE_FLAG="--service $SERVICE_ID"
+          fi
+
+          if [ -n "$ARGS" ]; then
+            railway variable set $ARGS $SERVICE_FLAG
+          fi
+
+      - name: Deployment Info
+        run: |
+          echo "Railway secrets synced. Connect your repository to Vercel for automatic frontend deployment."
